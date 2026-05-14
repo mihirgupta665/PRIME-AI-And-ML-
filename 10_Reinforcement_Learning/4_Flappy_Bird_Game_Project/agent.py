@@ -1,6 +1,7 @@
 import flappy_bird_gymnasium
 import gymnasium as gym
 from dqn import DQN
+from experience_replay import ReplayMemory
 
 if torch.backends.mps.is_available():
     device = "mps"
@@ -20,13 +21,19 @@ def run(self, is_training=True, render=False) :
 
     state, _ = env.reset()
 
+    if is_training:
+        memory = ReplayMemory(10000)
+
     while True:
         # Next action:
         # (feed the observation to your agent here)
-        action = env.acion_space.sample()
+        action = env.acion_space.sample()  # independent of the old state
 
-        # Processing:
+        # Processing: terminated is done with episode
         next_state, reward, terminated, _, info = env.step(action)
+
+        if is_training:
+            memory.append((state, action, new_state, reward, terminated))
 
         # Checking if the player is still alive
         if terminated:
