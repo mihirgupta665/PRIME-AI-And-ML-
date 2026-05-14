@@ -1,5 +1,6 @@
 import flappy_bird_gymnasium
 import gymnasium as gym
+from dqn import DQN
 
 if torch.backends.mps.is_available():
     device = "mps"
@@ -12,6 +13,10 @@ else:
 def run(self, is_training=True, render=False) :
     
     env = gym.make("FlappyBird-v0", render_mode= "human" if render else None, use_lidar=False)
+
+    num_states = env.observation_space.shape[0]  # input dimensions or sample
+    num_actions = env.action_space.n            # output dimensions or sample
+    policy_dqn = DQN(num_states, num_actions).to(device)
 
     state, _ = env.reset()
 
