@@ -111,3 +111,21 @@ class Agent:
                 
 
         # env.close  # manual stop 
+
+    def optimize(self, mini_batch, policy_dqn, target_dqn):
+        for state, action, reward, next_state, terminated in mini_batch:
+
+            if terminated:
+                target = reward
+
+            else:
+                with torch.no_grad():
+                    target_q = reward + self.gamma * target_dqn(next_state).max()  #y
+                
+            current_q = policy_dqn(state)  # y pred
+            loss = self.loss_fn(current_q, target_q)
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+
+            
