@@ -9,6 +9,7 @@ import yaml
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import random
 
 import os
 import argparse
@@ -29,11 +30,11 @@ class Agent:
     def __init__(self, param_set):
         self.param_set = param_set
 
-        with open("paramters.yaml") as f:
-            all_params_set = yaml.safe_load("f")
-            print(all_params_set)
+        with open("10_Reinforcement_Learning/4_Flappy_Bird_Game_Project/parameters.yaml") as f:
+            all_params_set = yaml.safe_load(f)
+            # print(all_params_set)
             params = all_params_set[param_set]
-            print(params)
+            # print(params) 
 
         self.alpha = params["alpha"]
         self.gamma = params["gamma"]
@@ -90,10 +91,10 @@ class Agent:
             state = torch.tensor(state, dtype=torch.float, device=device)
 
             # One Episode
-            while (not terminated and episode_reward < self.reward_threshold ):
+            while not terminated and episode_reward < self.reward_threshold:
                 # Each one step
-                if is_training and random.random() < self.epsilon:
-                    action = env.acion_space.sample()
+                if is_training and random.random() < epsilon:
+                    action = env.action_space.sample()
                     action = torch.tensor(action, dtype=torch.long, device=device)
                 else:
                     with torch.no_grad():
@@ -102,6 +103,8 @@ class Agent:
                 next_state, reward, terminated, _, _ = env.step(
                     action.item()
                 )  # Processing: terminated is done with episode
+                episode_reward += reward
+
                 reward = torch.tensor(reward, dtype=torch.float, device=device)
                 next_state = torch.tensor(next_state, dtype=torch.float, device=device)
 
@@ -109,7 +112,6 @@ class Agent:
                     memory.append((state, action, next_state, reward, terminated))
                     steps += 1
 
-                episode_reward += reward
                 state = next_state
 
             print(
@@ -117,7 +119,9 @@ class Agent:
             )
 
             if is_training:
-                epsilon = max( epsilon * self.epsilon_decay, self.epsilon_min)  # epsilon decay
+                epsilon = max(
+                    epsilon * self.epsilon_decay, self.epsilon_min
+                )  # epsilon decay
                 if episode_reward > best_reward:
                     log_msg = f"Best Rewards = {episode_reward} at episode = {episode}"
 
@@ -127,17 +131,15 @@ class Agent:
                     torch.save(policy_dqn.state_dict(), self.MODEL_FILE)
                     best_reward = episode_reward
 
-
-
             if is_training and len(memory) > self.mini_batch_size:
                 mini_batch = memory.sample(self.mini_batch_size)
-                optimize(mini_batch, policy_dqn, target_dqn)
+                self.optimize(mini_batch, policy_dqn, target_dqn)
 
                 if steps > self.network_sync_rate:
                     target_dqn.load_state_dict(policy_dqn.state_dict())
                     steps = 0
 
-        # env.close  # manual stop
+        # env.close()  # manual stop commenting env
 
     def optimize(self, mini_batch, policy_dqn, target_dqn):
         # get batch of experiences
