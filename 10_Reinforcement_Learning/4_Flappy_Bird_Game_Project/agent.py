@@ -5,7 +5,7 @@ from experience_replay import ReplayMemory
 import itertools
 import yaml
 import torch
-import torch.nn
+import torch.nn as nn
 import torch.optim as optim
 
 if torch.backends.mps.is_available():
@@ -25,6 +25,7 @@ class Agent:
             all_params_set = yaml.safe_load("f")
             print(all_params_set)
             params = all_params_set[param_set]
+            print(params)
 
         self.alpha = params["alpha"]
         self.gamma = params["gamma"]
@@ -39,6 +40,9 @@ class Agent:
         self.reward_threshold = params["reward_threshold"]
         self.network_sync_rate = params["network_sync_rate"]
 
+        self.loss_fn = nn.MSELoss()
+        self.optimizer = None
+
 
     def run(self, is_training=True, render=False) :
         
@@ -50,7 +54,15 @@ class Agent:
 
 
         if is_training:
-            memory = ReplayMemory(10000)
+            memory = ReplayMemory(self.replay_memory_size)
+            epsilon = self.epsilon_init
+
+            target_dqn = DQN(num_states, num_actions).to(device)
+            target_dqn.load_state_dict(policy_dqn.state_dict())
+
+            steps = 0
+            self.optimizer = optim.Adam(policy_dqn.parameters(), lr=self.alpha)
+
 
         for episode in itertools.count():
 
@@ -58,23 +70,44 @@ class Agent:
             terminated = False
 
             state, _ = env.reset()
+            state = torch.tensor(state, dtype=torch.float, device=device)
 
             # One Episode
             while not terminated:
                 # Each one step   
-                action = env.acion_space.sample()  # independent of the old state
-                next_state, reward, terminated, _, info = env.step(action)   # Processing: terminated is done with episode
+                if is_training  and random.random() < self.epsilon:
+                    action = env.acion_space.sample()  
+                    action = torch.tensor(action, dtype=torch.long, device=device)
+                else:
+                    with torch.no_grad():
+                        action = policy_dqn(state.unsqueeze(dim=0)).squeeze().argmax()
+
+
+                next_state, reward, terminated, _, _ = env.step(action.item())   # Processing: terminated is done with episode
+                reward = torch.tensor(reward, dtype=torch.float, device=device)
+                next_state = torch.tensor(next_state, dtype=torch.float, device=device)
+
 
                 if is_training:
                     memory.append((state, action, new_state, reward, terminated))
+                    steps += 1
                 
                 episode_rewards += reward
                 state = new_state 
 
             
-            print(f"Episode = {episode} has total rewards = {episode_rewards}")
+            print(f"Episode = {episode} has total rewards = {episode_rewards} and epsilon = {epsilon}")
 
+            if is_training:
+                epsilon = max(epsilon * self.epsilon_decay, self.epsilon_min)  # epsilon decay
 
+            if is_training and len(memory) > self.mini_batch_size:
+                mini_batch = memory.sample(self.mini_batch_size)
+                optimize(mini_batch, policy_dqn, target_dqn)
+
+                if steps > self.network_sync_rate:
+                    target_dqn.load_state_dict(policy_dqn.state_dict())
+                    steps=0
                 
 
-        # env.close  # manuall stop 
+        # env.close  # manual stop 
