@@ -113,19 +113,28 @@ class Agent:
         # env.close  # manual stop 
 
     def optimize(self, mini_batch, policy_dqn, target_dqn):
-        for state, action, reward, next_state, terminated in mini_batch:
+        # get batch of experiences
+        states, actions, next_states, rewards, terminations = zip(*mini_batch)
 
-            if terminated:
-                target = reward
+        states = torch.stack(states)
+        actions = torch.stack(actions)
+        next_states = torch.stack(next_states)
+        rewards = torch. stack(rewards)
+        terminations = torch. tensor(terminations) . float().to(device)
 
-            else:
-                with torch.no_grad():
-                    target_q = reward + self.gamma * target_dqn(next_state).max()  #y
-                
-            current_q = policy_dqn(state)  # y pred
-            loss = self.loss_fn(current_q, target_q)
-            self.optimizer.zero_grad()
-            loss.backward()
-            self.optimizer.step()
+        # calculate target Q-values - if terminations=true => zero
+        with torch.no_grad():
+            target_q = rewards + (1-terminations) * self.gamma * target_dqn(next_states).max(dim=1) [0]
+
+        # calculate y_pred i.e. Q-value from current policy
+        current_q = policy_dqn(states).gather(dim=1, index=actions.unsqueeze(dim=1)).squeeze()
+
+        # compute loss
+        loss = self. loss_fn(current_q, target_q)
+
+        # optimize model
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
 
             
