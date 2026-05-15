@@ -1,19 +1,29 @@
 import flappy_bird_gymnasium
 import gymnasium as gym
+
 from dqn import DQN
 from experience_replay import ReplayMemory
 import itertools
 import yaml
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
+
+import os
+import argparse
+
+
 
 if torch.backends.mps.is_available():
     device = "mps"
 elif torch.cuda.is_available():
     device = "cuda"
 else:
-    device= "cpu"
+    device = "cpu"
+
+RUNS_DIR = "runs"
+os.makedirs(RUNS_DIR, exist_ok=True)
 
 
 class Agent:
@@ -29,7 +39,7 @@ class Agent:
 
         self.alpha = params["alpha"]
         self.gamma = params["gamma"]
-        
+
         self.epsilon_init = params["epsilon_init"]
         self.epsilon_min = params["epsilon_min"]
         self.epsilon_decay = params["epsilon_decay"]
@@ -43,15 +53,15 @@ class Agent:
         self.loss_fn = nn.MSELoss()
         self.optimizer = None
 
+    def run(self, is_training=True, render=False):
 
-    def run(self, is_training=True, render=False) :
-        
-        env = gym.make("FlappyBird-v0", render_mode= "human" if render else None, use_lidar=False)
+        env = gym.make(
+            "FlappyBird-v0", render_mode="human" if render else None, use_lidar=False
+        )
 
         num_states = env.observation_space.shape[0]  # input dimensions or sample
-        num_actions = env.action_space.n            # output dimensions or sample
+        num_actions = env.action_space.n  # output dimensions or sample
         policy_dqn = DQN(num_states, num_actions).to(device)
-
 
         if is_training:
             memory = ReplayMemory(self.replay_memory_size)
@@ -63,7 +73,6 @@ class Agent:
             steps = 0
             self.optimizer = optim.Adam(policy_dqn.parameters(), lr=self.alpha)
 
-
         for episode in itertools.count():
 
             episode_rewards = 0
@@ -74,32 +83,35 @@ class Agent:
 
             # One Episode
             while not terminated:
-                # Each one step   
-                if is_training  and random.random() < self.epsilon:
-                    action = env.acion_space.sample()  
+                # Each one step
+                if is_training and random.random() < self.epsilon:
+                    action = env.acion_space.sample()
                     action = torch.tensor(action, dtype=torch.long, device=device)
                 else:
                     with torch.no_grad():
                         action = policy_dqn(state.unsqueeze(dim=0)).squeeze().argmax()
 
-
-                next_state, reward, terminated, _, _ = env.step(action.item())   # Processing: terminated is done with episode
+                next_state, reward, terminated, _, _ = env.step(
+                    action.item()
+                )  # Processing: terminated is done with episode
                 reward = torch.tensor(reward, dtype=torch.float, device=device)
                 next_state = torch.tensor(next_state, dtype=torch.float, device=device)
-
 
                 if is_training:
                     memory.append((state, action, new_state, reward, terminated))
                     steps += 1
-                
-                episode_rewards += reward
-                state = new_state 
 
-            
-            print(f"Episode = {episode} has total rewards = {episode_rewards} and epsilon = {epsilon}")
+                episode_rewards += reward
+                state = new_state
+
+            print(
+                f"Episode = {episode} has total rewards = {episode_rewards} and epsilon = {epsilon}"
+            )
 
             if is_training:
-                epsilon = max(epsilon * self.epsilon_decay, self.epsilon_min)  # epsilon decay
+                epsilon = max(
+                    epsilon * self.epsilon_decay, self.epsilon_min
+                )  # epsilon decay
 
             if is_training and len(memory) > self.mini_batch_size:
                 mini_batch = memory.sample(self.mini_batch_size)
@@ -107,10 +119,9 @@ class Agent:
 
                 if steps > self.network_sync_rate:
                     target_dqn.load_state_dict(policy_dqn.state_dict())
-                    steps=0
-                
+                    steps = 0
 
-        # env.close  # manual stop 
+        # env.close  # manual stop
 
     def optimize(self, mini_batch, policy_dqn, target_dqn):
         # get batch of experiences
@@ -119,22 +130,42 @@ class Agent:
         states = torch.stack(states)
         actions = torch.stack(actions)
         next_states = torch.stack(next_states)
-        rewards = torch. stack(rewards)
-        terminations = torch. tensor(terminations) . float().to(device)
+        rewards = torch.stack(rewards)
+        terminations = torch.tensor(terminations).float().to(device)
 
         # calculate target Q-values - if terminations=true => zero
         with torch.no_grad():
-            target_q = rewards + (1-terminations) * self.gamma * target_dqn(next_states).max(dim=1) [0]
+            target_q = (
+                rewards
+                + (1 - terminations)
+                * self.gamma
+                * target_dqn(next_states).max(dim=1)[0]
+            )
 
         # calculate y_pred i.e. Q-value from current policy
-        current_q = policy_dqn(states).gather(dim=1, index=actions.unsqueeze(dim=1)).squeeze()
+        current_q = (
+            policy_dqn(states).gather(dim=1, index=actions.unsqueeze(dim=1)).squeeze()
+        )
 
         # compute loss
-        loss = self. loss_fn(current_q, target_q)
+        loss = self.loss_fn(current_q, target_q)
 
         # optimize model
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
 
-            
+
+if __name__ == "__main__":
+    # Parse command line inputs
+    parser = argparse.ArgumentParser(description="Train or test model.")
+    parser.add_argument("hyperparameters", help="")
+    parser.add_argument("--train", help="Training mode", action="store_true")
+    args = parser.parse_args()
+
+    dql = Agent(param_set=args.hyperparameters)
+
+    if args.train:
+        dql.run(is_training=True)
+    else:
+        dql.run(is_training=False, render=True)
