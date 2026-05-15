@@ -4,7 +4,7 @@ import torch.nn as nn
 
 class DQN(nn.Module):
     # input dim, output dim, hidden dim
-    def _init_(self, state_dim=12, action_dim=2, hidden_dim=256):
+    def __init__(self, state_dim=12, action_dim=2, hidden_dim=256):
         super(DQN, self).__init__()
 
         self.model = nn.Sequential(

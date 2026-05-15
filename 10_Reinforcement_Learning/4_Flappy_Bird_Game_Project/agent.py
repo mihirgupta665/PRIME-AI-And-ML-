@@ -21,8 +21,12 @@ elif torch.cuda.is_available():
 else:
     device = "cpu"
 
-RUNS_DIR = "runs"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+RUNS_DIR = os.path.join(BASE_DIR, "runs")
 os.makedirs(RUNS_DIR, exist_ok=True)
+
+PARAMETERS_FILE = os.path.join(BASE_DIR, "parameters.yaml")
 
 
 class Agent:
@@ -30,7 +34,7 @@ class Agent:
     def __init__(self, param_set):
         self.param_set = param_set
 
-        with open("10_Reinforcement_Learning/4_Flappy_Bird_Game_Project/parameters.yaml") as f:
+        with open(PARAMETERS_FILE) as f:
             all_params_set = yaml.safe_load(f)
             # print(all_params_set)
             params = all_params_set[param_set]
@@ -114,9 +118,14 @@ class Agent:
 
                 state = next_state
 
-            print(
-                f"Episode = {episode} has total rewards = {episode_reward} and epsilon = {epsilon}"
-            )
+            if is_training:
+                print(
+                    f"Episode = {episode} has total rewards = {episode_reward} and epsilon = {epsilon}"
+                )
+            else:
+                print(
+                    f"Episode = {episode} has total rewards = {episode_reward}"
+                )
 
             if is_training:
                 epsilon = max(
