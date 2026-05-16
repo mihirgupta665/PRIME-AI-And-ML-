@@ -1,3 +1,6 @@
+# run below line in terminal to run the agent
+# python 10_Reinforcement_Learning/4_Flappy_Bird_Game_Project/agent.py flappybirdv0 --train 
+
 import flappy_bird_gymnasium
 import gymnasium as gym
 
