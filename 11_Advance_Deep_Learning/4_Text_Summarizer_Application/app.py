@@ -56,7 +56,7 @@ def summarize_dialogue(dialogue : str) -> str:   # dialogue is a str and it retu
         dialogue,
         padding="max_length",
         max_length=512,
-        trunction=True,
+        truncation=True,
         return_tensors="pt",
     ).to(
         device
@@ -87,6 +87,9 @@ async def summarizer(dialogue_input: DialogueInput):
     summary = summarize_dialogue(dialogue_input.dialogue)
     return {"summary" : summary} # JSON Obj
 
+
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request" : request})
+    return templates.TemplateResponse(
+        request=request, name="index.html", context={"request": request}
+    )
