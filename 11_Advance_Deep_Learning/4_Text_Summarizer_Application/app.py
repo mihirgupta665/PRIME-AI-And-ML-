@@ -43,7 +43,7 @@ def clean_data(text):
 
 
 # Summarization Mechanism
-def summarize_dialogue(dialogue):
+def summarize_dialogue(dialogue : str) -> str:   # dialogue is a str and it returns a str
     # clean user dialogue
     dialogue = clean_data(dialogue)  # pre-process
 
