@@ -1,3 +1,4 @@
+# uvicorn app:app --reload   : to run the website at the anaconda command prompt
 # pip install fastapi uvicorn
 from fastapi import FastAPI, Request
 from pydantic import BaseModel  # formating the input for validation of inputs
