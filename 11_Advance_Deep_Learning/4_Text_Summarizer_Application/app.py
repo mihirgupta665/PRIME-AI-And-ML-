@@ -41,4 +41,37 @@ def clean_data(text):
     text = text.strip().lower()
     return text
 
+
 # Summarization Mechanism
+def summarize_dialogue(dialogue):
+    # clean user dialogue
+    dialogue = clean_data(dialogue)  # pre-process
+
+    # tokenization
+    inputs = tokenizer(
+        dialogue,
+        padding="max_length",
+        max_length=512,
+        trunction=True,
+        return_tensors="pt",
+    ).to(
+        device
+    )  # input token_ids of dialogues
+
+    # Summary Generation inform of tokens first
+    # print("Device : ",device)
+    model.to(device)
+    targets = model.generate(  # summary (target) token id is generated
+        input_ids=inputs["input_ids"],  # dialogue tokens
+        attention_mask=inputs["attention_mask"],
+        max_length=150,
+        num_beams=4,  # total no. of summaries generation and out of them one best is selected
+        early_stopping=True,  # if all outputs formed and End Of Sequence received then stop generation
+    )
+    print(f"Targets : {targets}")
+
+    # Converion of tokens of summary to real human level summary by decoding
+    summary = tokenizer.decode(
+        targets[0], skip_special_tokens=True
+    )  # EOS, SEP(Separators)   # targets[0] : is a tokenizer list
+    return summary
