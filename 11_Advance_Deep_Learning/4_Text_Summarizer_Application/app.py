@@ -1,5 +1,5 @@
 # pip install fastapi uvicorn
-from fastapi import FastAPI, Requests
+from fastapi import FastAPI, Request
 from pydantic import BaseModel  # formating the input for validation of inputs
 from transformers import T5ForConditionalGeneration, T5Tokenizer
 import torch
@@ -15,6 +15,7 @@ app = FastAPI(title="Text Summarizer Application", description="Text Summarizati
 model = T5ForConditionalGeneration.from_pretrained("./saved_summarizer_model")
 tokenizer = T5Tokenizer.from_pretrained("./saved_summarizer_model")
 
+
 # Device Selection
 if torch.backends.mps.is_available():
     device = torch.device("mps")
@@ -26,12 +27,15 @@ else:
 model.to(device)    
 print(f"Device : {device}")
 
+
 # templating
 templates = Jinja2Templates(directory=".") 
+
 
 # Input Schema Defined for Dialogue to be Strings
 class DialogueInput(BaseModel):
     dialogue: str
+
 
 # Clean Data Function
 def clean_data(text):
@@ -75,3 +79,14 @@ def summarize_dialogue(dialogue : str) -> str:   # dialogue is a str and it retu
         targets[0], skip_special_tokens=True
     )  # EOS, SEP(Separators)   # targets[0] : is a tokenizer list
     return summary
+
+
+# API EndPoints Creation
+@app.post("/summarize/")
+async def summarizer(dialogue_input: DialogueInput):
+    summary = summarize_dialogue(dialogue_input.dialogue)
+    return {"summary" : summary} # JSON Obj
+
+@app.get("/", response_class=HTMLResponse)
+async def home(request: Request):
+    return templates.TemplateResponse("index.html", {"request" : request})
