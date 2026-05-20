@@ -28,3 +28,17 @@ print(f"Device : {device}")
 
 # templating
 templates = Jinja2Templates(directory=".") 
+
+# Input Schema Defined for Dialogue to be Strings
+class DialogueInput(BaseModel):
+    dialogue: str
+
+# Clean Data Function
+def clean_data(text):
+    text = re.sub(r"\r\n", " ", text) # lines
+    text = re.sub(r"<.*?>", " ", text) # html
+    text = re.sub(r"\s+", " ", text) # spaces
+    text = text.strip().lower()
+    return text
+
+# Summarization Mechanism
