@@ -8,18 +8,17 @@ app = Flask(__name__)
 def hello_world():
     return render_template("index.html")
 
-@app.route("/login")
+@app.route("/login", methods=["GET", "POST"])
 def login():
-    return render_template("login.html")
-
-@app.route("/handle-login", methods=["GET", "POST"])
-def handle_login():
     if request.method == "POST":
-        return "<p>POST request</p>"
-    if request.method == "GET":
-        return "<p>GET request</p>"
-    return "<p>This route is to handle login</p>"
-
+        print(request.form)  # POST request data can be accessed through request.form
+        name = request.form["username"]
+        password = request.form["password"]
+        return f"<p>Welcome {name}!</p>"
+    
+    else:
+        return render_template("login.html")
+    
 
 
 if __name__ == "__main__":
