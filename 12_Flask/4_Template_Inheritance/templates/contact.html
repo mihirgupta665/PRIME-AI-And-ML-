@@ -7,4 +7,20 @@
 {% block content %}
 <h1>Contact Page</h1>
 <p>Welcome to the contact.html Page</p>
+
+
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+<ul class=flashes>
+    {% for message in messages %}
+    <li>{{ message }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+{% endwith %}
+
+{% endblock %}
+
+{% block footer %}
+&copy; Copyright 2010 by <a href="https://www.apnacollege.in">ApnaCollege</a>.
 {% endblock %}
