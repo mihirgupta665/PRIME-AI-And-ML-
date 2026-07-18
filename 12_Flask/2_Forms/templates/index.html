@@ -7,12 +7,14 @@
     <title>Hello Page</title>
     <!-- <link rel="stylesheet" href="assets/style2.css"> -->
     <!--Jinja template syntax uses double curly braces          : a way to write python directly into html -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='style2.css' ) }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css' ) }}">
 </head>
 
 <body>
+    <p>Your Query was : {{query}}</p>
     <h1>Hello World this side Mihir!</h1>
     <p>Welcome to the my first webpage of flask although the funniest part is I know complete MERN Stack.</p>
+    <h3>Your name is {{name}}</h3>
     <!-- <script src="static/app.js"></script> -->
 </body>
 
