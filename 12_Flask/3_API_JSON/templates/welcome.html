@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome Page</title>
+</head>
+<body>
+    <!-- whenever we need to write html inside jinja templating then we need to tell it explicitly that the html code is safe { html_element | safe } -->
+    {{header | safe}}
+    <h1>Welcome Back {{name}}!</h1>
+
+    {% if name %}
+        <p>Hello {{name}}</p>
+    {% else %}
+        <p>Hello Anonymous</p>
+    {% endif %}
+
+    <ol>
+        {% for friend in friends %}
+            <li>{{ friend }}</li>
+        {% endfor %}
+    </ol>
+
+</body>
+</html>

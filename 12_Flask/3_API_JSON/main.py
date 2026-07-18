@@ -11,7 +11,7 @@ def hello_world():
         "message": "Welcome to the platform"
     }
 
-# jsonify(dict) : converts a python dictionary to json data. We could alos padd status code along with the data
+# jsonify(dict) : converts a python dictionary to json data. We could also add status code along with the data
     return jsonify(data), 200
 
 @app.route("/login", methods=["GET", "POST"])
@@ -20,7 +20,11 @@ def login():
         print(request.form)  # POST request data can be accessed through request.form
         name = request.form["username"]
         password = request.form["password"]
-        return f"<p>Welcome {name}!</p>"
+
+        friends = ["Adam", "Bob","Charlie", "Dan"]
+        header = "<header>ABC Website</header>"
+
+        return render_template("welcome.html", name=name, password=password, friends=friends, header=header)
     
     else:
         return render_template("login.html")
@@ -28,4 +32,4 @@ def login():
 
 
 if __name__ == "__main__":
-    app.run(debug=True) # degub=True updates the page automatically whenever there is a change in code
+    app.run(debug=True) # debug=True updates the page automatically whenever there is a change in code
