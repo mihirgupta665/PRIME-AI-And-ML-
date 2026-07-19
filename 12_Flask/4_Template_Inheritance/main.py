@@ -6,7 +6,6 @@ app = Flask(__name__)
 
 app.secret_key = "some secret message or key"
 
-app.secret_key = "some secret message or key"
 
 @app.route("/")
 def hello_world():
