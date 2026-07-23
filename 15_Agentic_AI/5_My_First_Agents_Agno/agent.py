@@ -10,8 +10,8 @@ load_dotenv()
 
 def build_agent():
     return Agent(
-        model=Groq(id="qwen/qwen3.6-27b"),
-        # model=GeminiInteractions(id="gemini-3-flash-preview"),
+        # model=Groq(id="qwen/qwen3.6-27b"),
+        model=GeminiInteractions(id="gemini-3.5-flash"),
         tools=[DuckDuckGoTools()],
         markdown=True,
         # instructions="You are a helpfull, well experienced and expert travel agent.",
