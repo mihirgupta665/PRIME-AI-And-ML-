@@ -21,6 +21,12 @@ team_leader = Team(
     model=Groq(id="qwen/qwen3.6-27b"),
     markdown=True,
     show_members_responses=True,
+    instructions=
+    """
+        All members agents must responds ot answer the query in thier specific language.
+        Do not route to just on agent.
+        Output the response of all agents.
+    """
 )
 
 
